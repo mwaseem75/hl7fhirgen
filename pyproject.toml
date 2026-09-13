@@ -35,10 +35,15 @@ Issues = "https://github.com/mwaseem75/hl7fhirgen/issues"
 Changelog = "https://github.com/mwaseem75/hl7fhirgen/blob/master/CHANGELOG.md"
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0.0"]
+mcp = ["mcp>=2.0.0"]
+dev = ["pytest>=8.0.0", "pytest-asyncio>=0.24.0", "mcp>=2.0.0"]
 
 [project.scripts]
 hl7fhirgen = "hl7fhirgen.cli:cli"
+hl7fhirgen-mcp = "hl7fhirgen.mcp_server:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

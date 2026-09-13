@@ -3,6 +3,32 @@
 All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+- Generic support for FHIR choice-type elements (`value[x]`, `diagnosis[x]`, etc.) —
+  resolved to their concrete JSON key in both `generator.py` and `validator.py`.
+- `packs/nphies/` — NPHIES pack: `check_claim()` (validate + rejection-code
+  cross-referencing) and a community-editable rejection-pattern knowledge base
+  (`rejection_codes.py`, illustrative examples only — see its docstring and the
+  README's "NPHIES pack" section). New CLI group: `hl7fhirgen nphies
+  check-claim|explain-rejection|list-rejections`.
+- `mcp_server.py` — MCP server (stdio) exposing `generate_fhir_resource`,
+  `validate_fhir_resource`, `explain_profile`, and the NPHIES pack's tools.
+  Claude Code plugin manifest (`.claude-plugin/`), `.mcp.json`, `manifest.json` for
+  MCPB packaging, and `SKILL.md`.
+- `action/action.yml` — composite GitHub Action wrapping
+  `generate`/`validate`/`explain` for CI.
+- `examples/nphies/` — illustrative demo Claim and ClaimResponse profiles/resources.
+- Reference generation now honors a profile's `targetProfile` (e.g.
+  `"Patient/<uuid>"` instead of a generic `"Resource/<uuid>"`).
+
+### Fixed
+- Validator: cardinality and other per-element checks were flattened across every
+  instance of a repeating parent (e.g. all `Claim.item.quantity` values pooled into
+  one count instead of checked per `item`). Now checked per parent instance,
+  recursively — see `validator.py`'s module docstring.
+
 ## [0.1.0] - 2026-09-13
 
 ### Added

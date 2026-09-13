@@ -4,7 +4,8 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Generate, validate, and explain FHIR resources against any StructureDefinition
-profile — for any FHIR IG, with no vendor lock-in.
+profile — for any FHIR IG, with no vendor lock-in. Includes an NPHIES pack for
+pre-submission claim checking and rejection-code lookups.
 
 ```bash
 pip install hl7fhirgen
@@ -83,6 +84,21 @@ $ hl7fhirgen explain examples/patient-example-profile.json
   summary: required elements, must-support elements, extensions, value-set
   bindings, and fixed/pattern constraints. Useful the moment you open an
   unfamiliar IG.
+- **NPHIES pack** — pre-submission claim checking for Saudi Arabia's national
+  FHIR claims/eligibility exchange: `nphies check-claim` validates a
+  Claim/ClaimResponse-shaped resource against your own profile and explains any
+  recognized rejection pattern; `nphies explain-rejection` looks one up
+  directly. See [NPHIES pack](#nphies-pack) below for what this is (and isn't)
+  built from.
+- **Choice types handled generically** — `value[x]`-style elements (`value[x]`,
+  `diagnosis[x]`, `onset[x]`, ...) resolve to their concrete JSON key
+  (`valueString`, `diagnosisCodeableConcept`, ...) automatically, in both
+  generation and validation.
+- **MCP server** — exposes `generate_fhir_resource`, `validate_fhir_resource`,
+  `explain_profile`, and the NPHIES pack's tools to any MCP-capable client
+  (Claude Desktop, Claude Code, etc.) — see [MCP server](#mcp-server) below.
+- **GitHub Action** — run generate/validate/explain in CI — see
+  [GitHub Action](#github-action) below.
 
 ## CLI
 
@@ -90,7 +106,84 @@ $ hl7fhirgen explain examples/patient-example-profile.json
 hl7fhirgen generate my-profile.json --full --out patient.json
 hl7fhirgen validate patient.json --profile my-profile.json
 hl7fhirgen explain my-profile.json --out summary.md
+hl7fhirgen nphies check-claim claim-response.json --profile my-profile.json
+hl7fhirgen nphies explain-rejection duplicate-claim
+hl7fhirgen nphies list-rejections
 ```
+
+## NPHIES pack
+
+[NPHIES](https://nphies.sa) is Saudi Arabia's national FHIR-based claims and
+eligibility exchange — every hospital, payer, and vendor in the Kingdom is on
+it, rejection codes are notoriously hard to act on, and there's little open
+tooling for it. The NPHIES pack adds two things on top of the generic engine:
+
+```bash
+hl7fhirgen nphies check-claim my-claim-response.json --profile my-nphies-profile.json
+hl7fhirgen nphies explain-rejection duplicate-claim
+```
+
+- `check-claim` runs the same generic validator against **whatever profile you
+  supply** (bring your own copy of a real NPHIES profile from the NPHIES
+  developer portal) and cross-references any `error[].code.coding[].code`
+  found on the resource against a bundled rejection-pattern knowledge base.
+- `explain-rejection` / `list-rejections` look a pattern up directly.
+
+**Important:** the rejection-code knowledge base
+(`hl7fhirgen.packs.nphies.rejection_codes`) ships with a handful of
+**illustrative example entries** seeding its structure — it is a
+community-maintained lookup table, not an official mirror of NPHIES's actual
+terminology. hl7fhirgen has no live feed of NPHIES's CodeSystem. Every result
+carries a disclaimer; verify against the current NPHIES IG and your payer
+contract before acting on a real claim decision. Nothing in this pack was
+built from non-public NPHIES material — see `CONTRIBUTING.md` to contribute a
+real rejection pattern you've encountered.
+
+## MCP server
+
+```bash
+pip install "hl7fhirgen[mcp]"
+```
+
+Exposes 6 tools over the [Model Context Protocol](https://modelcontextprotocol.io):
+`generate_fhir_resource`, `validate_fhir_resource`, `explain_profile`,
+`nphies_check_claim`, `nphies_explain_rejection`, `nphies_list_rejection_codes`.
+Runs locally over stdio — an MCP client launches `hl7fhirgen-mcp` as a
+subprocess, no network or Docker involved. Tools take profile/resource JSON as
+strings, not file paths, so they work regardless of the client's filesystem
+access.
+
+For Claude Code: this repo ships a `.mcp.json`, so opening it in Claude Code
+makes the server available automatically. For other clients, point them at the
+`hl7fhirgen-mcp` command (installed by the `mcp` extra above).
+
+### Claude Code plugin
+
+```
+/plugin marketplace add mwaseem75/hl7fhirgen
+/plugin install hl7fhirgen@hl7fhirgen-marketplace
+```
+
+Bundles the MCP server above with a skill (`SKILL.md`) that teaches Claude when
+to reach for hl7fhirgen and flags real gotchas discovered while building it
+(array-vs-scalar JSON shape, choice-type resolution, per-instance cardinality,
+the NPHIES pack's disclaimer).
+
+## GitHub Action
+
+```yaml
+- uses: mwaseem75/hl7fhirgen/action@master
+  with:
+    command: validate
+    profile-path: profiles/my-profile.json
+    resource-path: test-data/patient.json
+```
+
+Wraps the CLI's `generate`/`validate`/`explain` commands for CI — e.g. gate a
+PR on every test resource still validating against your profile. See
+`action/action.yml` for all inputs. Not yet published to PyPI, so the action
+currently installs hl7fhirgen from this repo directly; switch to a pinned
+release tag once one exists.
 
 ## Scope
 
@@ -122,7 +215,13 @@ already does well. `hl7fhirgen` doesn't try to replace it. What it does today:
   network, an extension slice with no inline `value[x]` gets a generic
   `valueString` placeholder.
 - Slicing support beyond extensions is best-effort: a repeating element with
-  multiple named slices generates using the first slice's constraints only.
+  multiple named slices generates using the first slice's constraints only
+  (this also applies to validation's cardinality/type checks for that group).
+- Choice-type elements (`value[x]`, `diagnosis[x]`, etc.) are resolved to their
+  concrete JSON key automatically, both generating and validating.
+- Cardinality and other per-element checks are evaluated per parent instance,
+  not flattened across the whole resource — a repeating `Claim.item` with a
+  `0..1 Claim.item.quantity` is checked per item, not pooled.
 
 None of this is hidden — `hl7fhirgen validate` reports exactly what it
 checked, and unsupported constructs are meant to fail loudly rather than
@@ -131,15 +230,17 @@ silently pass.
 ## Project layout
 
 ```
-src/hl7fhirgen/   core package (structure_definition, generator, validator, explainer, fhir_datatypes, cli)
-examples/         a hand-authored demo profile used in the README and tests
-tests/            pytest suite
+src/hl7fhirgen/         core package (structure_definition, generator, validator, explainer, fhir_datatypes, cli, mcp_server)
+src/hl7fhirgen/packs/   vertical packs built on the generic engine (nphies: check_claim, rejection_codes)
+examples/               hand-authored demo profiles used in the README and tests (including examples/nphies/)
+action/                 GitHub Action wrapping the CLI
+tests/                  pytest suite
 ```
 
 ## Development
 
 ```bash
-pip install -e ".[dev]"
+pip install -e ".[dev,mcp]"
 pytest
 ```
 
@@ -150,16 +251,14 @@ editor's hover/go-to-definition) works from a plain `pip install`.
 
 ## Roadmap
 
-- NPHIES profile pack: synthetic eligibility/claim/pre-auth resources, a
-  pre-submission `check-claim` command, and a community-sourced rejection-code
-  explainer — built from NPHIES's publicly published FHIR IG.
 - Web playground (paste a resource + profile, get instant feedback in the
-  browser).
-- MCP server + Claude Code plugin, so any MCP-capable AI client can call
-  generate/validate/explain directly.
-- GitHub Action for CI validation of FHIR resources against an IG.
+  browser) — not yet built.
 - Optional `--strict` mode that shells out to the official validator jar for
   authoritative validation when installed.
+- Publish to PyPI (the GitHub Action currently installs from this repo
+  directly as a stand-in).
+- Grow the NPHIES rejection-code knowledge base with real, community-reported
+  patterns (see `CONTRIBUTING.md`).
 
 ## License
 

@@ -1,0 +1,25 @@
+{
+  "manifest_version": "0.2",
+  "name": "hl7fhirgen",
+  "version": "0.1.0",
+  "description": "Generate, validate, and explain FHIR resources against any StructureDefinition profile — no vendor lock-in.",
+  "author": {
+    "name": "mwaseem75",
+    "url": "https://github.com/mwaseem75/hl7fhirgen"
+  },
+  "server": {
+    "type": "python",
+    "entry_point": "src/hl7fhirgen/mcp_server.py",
+    "mcp_config": {
+      "command": "python",
+      "args": ["-m", "hl7fhirgen.mcp_server"]
+    }
+  },
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "python": ">=3.10"
+    }
+  },
+  "license": "MIT"
+}

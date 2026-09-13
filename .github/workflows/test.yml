@@ -21,8 +21,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install hl7fhirgen with dev extras
-        run: pip install -e ".[dev]"
+      - name: Install hl7fhirgen with dev + mcp extras
+        run: pip install -e ".[dev,mcp]"
 
       - name: Run tests
         run: pytest tests/ -v

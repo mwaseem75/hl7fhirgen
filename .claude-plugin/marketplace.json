@@ -1,0 +1,14 @@
+{
+  "name": "hl7fhirgen-marketplace",
+  "description": "hl7fhirgen: generate, validate, and explain FHIR resources against any StructureDefinition profile — no vendor lock-in.",
+  "owner": {
+    "name": "mwaseem75",
+    "url": "https://github.com/mwaseem75/hl7fhirgen"
+  },
+  "plugins": [
+    {
+      "name": "hl7fhirgen",
+      "source": "./"
+    }
+  ]
+}

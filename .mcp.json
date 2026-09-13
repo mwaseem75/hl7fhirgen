@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "hl7fhirgen": {
+      "command": "python",
+      "args": ["-m", "hl7fhirgen.mcp_server"]
+    }
+  }
+}

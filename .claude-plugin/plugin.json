@@ -1,0 +1,21 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "hl7fhirgen",
+  "version": "0.1.0",
+  "description": "Generate, validate, and explain FHIR resources against any StructureDefinition profile — no vendor lock-in. Bundles the hl7fhirgen MCP server and a skill covering profile-aware generation, validation, explanation, and NPHIES-style claim rejection checking.",
+  "author": {
+    "name": "mwaseem75",
+    "url": "https://github.com/mwaseem75/hl7fhirgen"
+  },
+  "homepage": "https://github.com/mwaseem75/hl7fhirgen",
+  "license": "MIT",
+  "skills": [
+    "./"
+  ],
+  "mcpServers": {
+    "hl7fhirgen": {
+      "command": "python",
+      "args": ["-m", "hl7fhirgen.mcp_server"]
+    }
+  }
+}

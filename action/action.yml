@@ -1,0 +1,71 @@
+name: "hl7fhirgen"
+description: "Generate, validate, or explain a FHIR resource against a StructureDefinition profile in your CI pipeline."
+branding:
+  icon: "check-circle"
+  color: "blue"
+
+inputs:
+  command:
+    description: "Which command to run: generate, validate, or explain."
+    required: true
+  profile-path:
+    description: "Path (in the checked-out repo) to the StructureDefinition JSON file."
+    required: true
+  resource-path:
+    description: "Path to the FHIR resource JSON file. Required for 'validate'."
+    required: false
+    default: ""
+  full:
+    description: "For 'generate': also populate optional elements, not just required/must-support ones."
+    required: false
+    default: "false"
+  out-path:
+    description: "File to write the command's output to."
+    required: false
+    default: "hl7fhirgen-output"
+
+outputs:
+  out-path:
+    description: "Path to the file the command's output was written to."
+    value: ${{ inputs.out-path }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    # TODO: switch to `pip install hl7fhirgen` once it's published to PyPI.
+    - name: Install hl7fhirgen
+      shell: bash
+      run: pip install "git+https://github.com/mwaseem75/hl7fhirgen.git"
+
+    - name: Run hl7fhirgen
+      shell: bash
+      run: |
+        set -eo pipefail
+        case "${{ inputs.command }}" in
+          generate)
+            ARGS="generate ${{ inputs.profile-path }} --out ${{ inputs.out-path }}"
+            if [ "${{ inputs.full }}" = "true" ]; then
+              ARGS="$ARGS --full"
+            fi
+            hl7fhirgen $ARGS
+            ;;
+          validate)
+            if [ -z "${{ inputs.resource-path }}" ]; then
+              echo "resource-path is required for command: validate" >&2
+              exit 1
+            fi
+            hl7fhirgen validate "${{ inputs.resource-path }}" --profile "${{ inputs.profile-path }}" | tee "${{ inputs.out-path }}"
+            ;;
+          explain)
+            hl7fhirgen explain "${{ inputs.profile-path }}" --out "${{ inputs.out-path }}"
+            ;;
+          *)
+            echo "Unknown command: ${{ inputs.command }} (expected generate, validate, or explain)" >&2
+            exit 1
+            ;;
+        esac
