@@ -17,6 +17,9 @@ That's it — no server, no terminology service, no license required. Point it a
 any StructureDefinition: a national IG like NPHIES, US Core, a custom hospital
 profile, or one you're authoring yourself.
 
+New here? **[TUTORIAL.md](TUTORIAL.md)** walks through every feature step by step,
+copy-paste commands included.
+
 ## Why
 
 Working with FHIR profiles is one of the most painful parts of implementing
