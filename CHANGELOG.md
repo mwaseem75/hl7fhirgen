@@ -19,6 +19,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   MCPB packaging, and `SKILL.md`.
 - `action/action.yml` — composite GitHub Action wrapping
   `generate`/`validate`/`explain` for CI.
+- `webapp/` — FastAPI web playground (generate/validate/explain + the NPHIES pack's
+  check-claim and rejection lookup, all in the browser) with a vanilla-JS static
+  frontend, `Dockerfile`, `docker-compose.yml`, and `render.yaml` for one-click deploy.
 - `examples/nphies/` — illustrative demo Claim and ClaimResponse profiles/resources.
 - Reference generation now honors a profile's `targetProfile` (e.g.
   `"Patient/<uuid>"` instead of a generic `"Resource/<uuid>"`).

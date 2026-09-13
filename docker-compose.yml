@@ -1,0 +1,8 @@
+services:
+  playground:
+    build:
+      context: .
+      dockerfile: webapp/Dockerfile
+    ports:
+      - "8000:8000"
+    restart: unless-stopped

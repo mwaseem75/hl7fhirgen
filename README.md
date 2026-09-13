@@ -99,6 +99,8 @@ $ hl7fhirgen explain examples/patient-example-profile.json
   (Claude Desktop, Claude Code, etc.) — see [MCP server](#mcp-server) below.
 - **GitHub Action** — run generate/validate/explain in CI — see
   [GitHub Action](#github-action) below.
+- **Web playground** — try generate/validate/explain/NPHIES check-claim in the
+  browser, no install required — see [Web playground](#web-playground) below.
 
 ## CLI
 
@@ -185,6 +187,21 @@ PR on every test resource still validating against your profile. See
 currently installs hl7fhirgen from this repo directly; switch to a pinned
 release tag once one exists.
 
+## Web playground
+
+Run locally:
+
+```bash
+docker compose up --build
+```
+
+Open http://localhost:8000 — generate, validate, explain, and run the NPHIES pack's
+`check-claim` entirely in the browser, with the same bundled examples the CLI/tests use.
+
+**Deploy your own copy to Render:** connect this repo on [Render](https://dashboard.render.com)
+via **New +** → **Blueprint** — it picks up `render.yaml` and deploys `webapp/Dockerfile`
+automatically (free tier).
+
 ## Scope
 
 Full FHIR conformance validation — terminology services, slicing
@@ -232,6 +249,7 @@ silently pass.
 ```
 src/hl7fhirgen/         core package (structure_definition, generator, validator, explainer, fhir_datatypes, cli, mcp_server)
 src/hl7fhirgen/packs/   vertical packs built on the generic engine (nphies: check_claim, rejection_codes)
+webapp/                 FastAPI web playground + static frontend
 examples/               hand-authored demo profiles used in the README and tests (including examples/nphies/)
 action/                 GitHub Action wrapping the CLI
 tests/                  pytest suite
@@ -240,7 +258,7 @@ tests/                  pytest suite
 ## Development
 
 ```bash
-pip install -e ".[dev,mcp]"
+pip install -e ".[dev,mcp,webapp]"
 pytest
 ```
 
@@ -251,8 +269,6 @@ editor's hover/go-to-definition) works from a plain `pip install`.
 
 ## Roadmap
 
-- Web playground (paste a resource + profile, get instant feedback in the
-  browser) — not yet built.
 - Optional `--strict` mode that shells out to the official validator jar for
   authoritative validation when installed.
 - Publish to PyPI (the GitHub Action currently installs from this repo

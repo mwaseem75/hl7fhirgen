@@ -5,7 +5,7 @@
 ```bash
 git clone https://github.com/mwaseem75/hl7fhirgen.git
 cd hl7fhirgen
-pip install -e ".[dev,mcp]"
+pip install -e ".[dev,mcp,webapp]"
 pytest
 ```
 
@@ -22,9 +22,10 @@ src/hl7fhirgen/
   cli.py                      click CLI wiring the above together
   mcp_server.py               MCP server exposing the same functions as tools (stdio transport)
   packs/nphies/               NPHIES pack: rejection_codes.py (knowledge base), check_claim.py
+webapp/                      FastAPI playground (main.py) + static/ frontend (vanilla JS, no build step)
 examples/                    hand-authored demo profiles used in README and tests, incl. examples/nphies/
 action/                      GitHub Action wrapping the CLI
-tests/                       pytest suite (one test file per module, plus test_cli.py, test_mcp_server.py)
+tests/                       pytest suite (one test file per module, plus test_cli.py, test_mcp_server.py, test_webapp.py)
 ```
 
 ## Making a change
