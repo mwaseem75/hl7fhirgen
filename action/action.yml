@@ -37,10 +37,9 @@ runs:
       with:
         python-version: "3.12"
 
-    # TODO: switch to `pip install hl7fhirgen` once it's published to PyPI.
     - name: Install hl7fhirgen
       shell: bash
-      run: pip install "git+https://github.com/mwaseem75/hl7fhirgen.git"
+      run: pip install hl7fhirgen
 
     - name: Run hl7fhirgen
       shell: bash

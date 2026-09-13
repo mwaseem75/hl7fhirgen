@@ -1,6 +1,7 @@
 # hl7FHIRGen
 
 [![Tests](https://github.com/mwaseem75/hl7fhirgen/actions/workflows/test.yml/badge.svg)](https://github.com/mwaseem75/hl7fhirgen/actions/workflows/test.yml)
+[![PyPI](https://img.shields.io/pypi/v/hl7fhirgen)](https://pypi.org/project/hl7fhirgen/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Generate, validate, and explain FHIR resources against any StructureDefinition
@@ -183,9 +184,7 @@ the NPHIES pack's disclaimer).
 
 Wraps the CLI's `generate`/`validate`/`explain` commands for CI — e.g. gate a
 PR on every test resource still validating against your profile. See
-`action/action.yml` for all inputs. Not yet published to PyPI, so the action
-currently installs hl7fhirgen from this repo directly; switch to a pinned
-release tag once one exists.
+`action/action.yml` for all inputs.
 
 ## Web playground
 
@@ -271,8 +270,6 @@ editor's hover/go-to-definition) works from a plain `pip install`.
 
 - Optional `--strict` mode that shells out to the official validator jar for
   authoritative validation when installed.
-- Publish to PyPI (the GitHub Action currently installs from this repo
-  directly as a stand-in).
 - Grow the NPHIES rejection-code knowledge base with real, community-reported
   patterns (see `CONTRIBUTING.md`).
 
