@@ -152,7 +152,12 @@ FIELD_NAME_FAKERS = {
 }
 
 
-def fake_value_for_type(type_code: str, binding: dict | None = None, field_name: str | None = None) -> object:
+def fake_value_for_type(
+    type_code: str,
+    binding: dict | None = None,
+    field_name: str | None = None,
+    target_type: str | None = None,
+) -> object:
     if type_code in PRIMITIVE_TYPES:
         if type_code == "code" and binding:
             return fake_code_for_binding(binding, fallback_type_code="code")
@@ -161,7 +166,7 @@ def fake_value_for_type(type_code: str, binding: dict | None = None, field_name:
             return hint()
         return fake_primitive(type_code)
     if type_code == "Reference":
-        return fake_reference()
+        return fake_reference(target_type or "Resource")
     faker_fn = COMPLEX_TYPE_FAKERS.get(type_code)
     if faker_fn:
         return faker_fn()

@@ -19,6 +19,22 @@ class StructureDefinitionError(ValueError):
     pass
 
 
+CHOICE_SUFFIX = "[x]"
+
+
+def choice_field_name(base: str, type_code: str) -> str:
+    """Resolve a FHIR choice-type element (e.g. "value[x]") to its concrete JSON key.
+
+    FHIR never serializes a literal "[x]" — a `value[x]` element typed `string` is
+    serialized as `valueString`, typed `CodeableConcept` as `valueCodeableConcept`, etc.
+
+    Args:
+        base: The element name with "[x]" stripped, e.g. "value" or "diagnosis".
+        type_code: The concrete FHIR type, e.g. "string", "CodeableConcept".
+    """
+    return f"{base}{type_code[0].upper()}{type_code[1:]}"
+
+
 @dataclass
 class ElementDefinition:
     """One parsed FHIR `ElementDefinition` from a StructureDefinition's snapshot/differential.

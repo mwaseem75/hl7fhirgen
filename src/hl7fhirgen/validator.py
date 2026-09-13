@@ -6,6 +6,11 @@ primitive-type sanity. This is a documented subset of full FHIR conformance
 checking (no terminology server, no cross-element invariants/slicing
 discriminators) — see README "Scope". Use `--strict` (shells out to the
 official HL7 validator, when installed) for authoritative validation.
+
+Cardinality and constraints are checked per parent instance, not flattened
+across the whole resource — e.g. for a repeating `Claim.item` with a `0..1`
+`Claim.item.quantity`, each item is checked to have at most one `quantity` of
+its own, rather than pooling every item's quantities into one count.
 """
 from __future__ import annotations
 
@@ -13,7 +18,7 @@ import re
 from dataclasses import dataclass, field
 
 from hl7fhirgen import fhir_datatypes
-from hl7fhirgen.structure_definition import StructureDefinition
+from hl7fhirgen.structure_definition import CHOICE_SUFFIX, ElementDefinition, StructureDefinition, choice_field_name
 
 _DATE_RE = re.compile(r"^\d{4}(-\d{2}(-\d{2})?)?$")
 _DATETIME_RE = re.compile(r"^\d{4}(-\d{2}(-\d{2}(T[\d:.]+(Z|[+-]\d{2}:\d{2})?)?)?)?$")
@@ -59,28 +64,31 @@ class ValidationResult:
         return not any(i.severity == "error" for i in self.issues)
 
 
-def _walk_path(node, segments: list[str]) -> list:
-    if not segments:
-        return [node]
-    seg, rest = segments[0], segments[1:]
-    if isinstance(node, list):
-        found = []
-        for item in node:
-            found.extend(_walk_path(item, segments))
-        return found
-    if isinstance(node, dict):
-        if seg not in node:
-            return []
-        return _walk_path(node[seg], rest)
-    return []
-
-
 def _pattern_matches(actual, pattern) -> bool:
     if isinstance(pattern, dict):
         if not isinstance(actual, dict):
             return False
         return all(k in actual and _pattern_matches(actual[k], v) for k, v in pattern.items())
     return actual == pattern
+
+
+def _field_values(container: dict, raw_field_name: str, type_codes: list[str]) -> list:
+    """Read `raw_field_name` off `container`, resolving a choice-type suffix (e.g.
+    "value[x]") against every concrete key it could have been serialized as, and
+    normalizing a scalar-or-list JSON value into a flat list of instances.
+    """
+    if raw_field_name.endswith(CHOICE_SUFFIX):
+        base = raw_field_name[: -len(CHOICE_SUFFIX)]
+        candidates = [choice_field_name(base, tc) for tc in type_codes] or [base]
+    else:
+        candidates = [raw_field_name]
+
+    values = []
+    for candidate in candidates:
+        if candidate in container:
+            v = container[candidate]
+            values.extend(v if isinstance(v, list) else [v])
+    return values
 
 
 def validate_resource(resource: dict, sd: StructureDefinition) -> ValidationResult:
@@ -102,56 +110,66 @@ def validate_resource(resource: dict, sd: StructureDefinition) -> ValidationResu
         ))
         return result
 
-    for el in sd.elements:
-        rel_path = sd.relative_path(el)
-        if not rel_path:
-            continue
-        segments = rel_path.split(".")
-        values = _walk_path(resource, segments)
+    if isinstance(resource, dict):
+        _validate_children(resource, sd, prefix="", result=result)
+    return result
+
+
+def _validate_children(container: dict, sd: StructureDefinition, prefix: str, result: ValidationResult) -> None:
+    children = sd.immediate_children(prefix)
+    by_path: dict[str, list[ElementDefinition]] = {}
+    for el in children:
+        by_path.setdefault(sd.relative_path(el), []).append(el)
+
+    for rel_path, els in by_path.items():
+        # v1 scope: slicing beyond what's needed for cardinality/type checks isn't
+        # disambiguated — the first slice's constraints are used for the whole group.
+        primary = els[0]
+        raw_field_name = rel_path.split(".")[-1]
+        values = _field_values(container, raw_field_name, primary.type_codes)
         count = len(values)
 
-        if count < el.min:
+        if count < primary.min:
             result.issues.append(ValidationIssue(
-                "error", rel_path, f"required (min cardinality {el.min}) but found {count}",
+                "error", rel_path, f"required (min cardinality {primary.min}) but found {count}",
             ))
-        if el.max_int is not None and count > el.max_int:
+        if primary.max_int is not None and count > primary.max_int:
             result.issues.append(ValidationIssue(
-                "error", rel_path, f"max cardinality {el.max} exceeded (found {count})",
+                "error", rel_path, f"max cardinality {primary.max} exceeded (found {count})",
             ))
 
-        if el.fixed:
-            _, fixed_value = el.fixed
-            for v in values:
-                if v != fixed_value:
-                    result.issues.append(ValidationIssue(
-                        "error", rel_path, f"must equal fixed value {fixed_value!r}, got {v!r}",
-                    ))
+        for value in values:
+            _validate_value(value, primary, rel_path, result)
+            if isinstance(value, dict) and sd.immediate_children(rel_path):
+                _validate_children(value, sd, rel_path, result)
 
-        if el.pattern:
-            _, pattern_value = el.pattern
-            for v in values:
-                if not _pattern_matches(v, pattern_value):
-                    result.issues.append(ValidationIssue(
-                        "error", rel_path, f"does not match required pattern {pattern_value!r}",
-                    ))
 
-        if el.binding and el.binding.get("strength") == "required":
-            value_set = el.binding.get("valueSet", "").split("|")[0]
-            options = fhir_datatypes.KNOWN_VALUE_SETS.get(value_set)
-            if options:
-                for v in values:
-                    if isinstance(v, str) and v not in options:
-                        result.issues.append(ValidationIssue(
-                            "error", rel_path, f"{v!r} is not in required binding {value_set}",
-                        ))
+def _validate_value(value, el: ElementDefinition, rel_path: str, result: ValidationResult) -> None:
+    if el.fixed:
+        _, fixed_value = el.fixed
+        if value != fixed_value:
+            result.issues.append(ValidationIssue(
+                "error", rel_path, f"must equal fixed value {fixed_value!r}, got {value!r}",
+            ))
 
-        type_code = el.type_codes[0] if el.type_codes else None
-        check = _PRIMITIVE_CHECKS.get(type_code)
-        if check:
-            for v in values:
-                if not check(v):
-                    result.issues.append(ValidationIssue(
-                        "error", rel_path, f"value {v!r} is not a valid {type_code}",
-                    ))
+    if el.pattern:
+        _, pattern_value = el.pattern
+        if not _pattern_matches(value, pattern_value):
+            result.issues.append(ValidationIssue(
+                "error", rel_path, f"does not match required pattern {pattern_value!r}",
+            ))
 
-    return result
+    if el.binding and el.binding.get("strength") == "required":
+        value_set = el.binding.get("valueSet", "").split("|")[0]
+        options = fhir_datatypes.KNOWN_VALUE_SETS.get(value_set)
+        if options and isinstance(value, str) and value not in options:
+            result.issues.append(ValidationIssue(
+                "error", rel_path, f"{value!r} is not in required binding {value_set}",
+            ))
+
+    type_code = el.type_codes[0] if el.type_codes else None
+    check = _PRIMITIVE_CHECKS.get(type_code)
+    if check and not check(value):
+        result.issues.append(ValidationIssue(
+            "error", rel_path, f"value {value!r} is not a valid {type_code}",
+        ))

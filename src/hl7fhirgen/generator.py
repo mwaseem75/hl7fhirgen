@@ -8,7 +8,7 @@ extension handling do and don't cover in v1.
 from __future__ import annotations
 
 from hl7fhirgen import fhir_datatypes
-from hl7fhirgen.structure_definition import ElementDefinition, StructureDefinition
+from hl7fhirgen.structure_definition import CHOICE_SUFFIX, ElementDefinition, StructureDefinition, choice_field_name
 
 # FHIR's JSON *shape* (array vs. scalar) is fixed by the base resource's own
 # cardinality, not by how far a profile narrows it — e.g. Patient.identifier
@@ -51,9 +51,9 @@ def _populate_children(container: dict, sd: StructureDefinition, prefix: str, in
         by_path.setdefault(sd.relative_path(el), []).append(el)
 
     for rel_path, els in by_path.items():
-        field_name = rel_path.split(".")[-1]
+        raw_field_name = rel_path.split(".")[-1]
 
-        if field_name == "extension":
+        if raw_field_name == "extension":
             extensions = _build_extensions(els, sd, include_optional)
             if extensions:
                 container["extension"] = extensions
@@ -62,6 +62,10 @@ def _populate_children(container: dict, sd: StructureDefinition, prefix: str, in
         primary = els[0]
         if not any(_should_include(e, include_optional) for e in els):
             continue
+
+        field_name = raw_field_name
+        if raw_field_name.endswith(CHOICE_SUFFIX) and primary.type_codes:
+            field_name = choice_field_name(raw_field_name[: -len(CHOICE_SUFFIX)], primary.type_codes[0])
 
         is_list = (
             primary.max_is_unbounded
@@ -95,8 +99,11 @@ def _build_value(el: ElementDefinition, sd: StructureDefinition, rel_path: str, 
         _populate_children(base, sd, rel_path, include_optional)
         return base
 
-    field_name = rel_path.split(".")[-1]
-    return fhir_datatypes.fake_value_for_type(type_code, el.binding, field_name=field_name)
+    field_name = rel_path.split(".")[-1].removesuffix(CHOICE_SUFFIX)
+    target_type = None
+    if type_code == "Reference" and el.types and el.types[0].get("targetProfile"):
+        target_type = el.types[0]["targetProfile"][0].rsplit("/", 1)[-1]
+    return fhir_datatypes.fake_value_for_type(type_code, el.binding, field_name=field_name, target_type=target_type)
 
 
 def _build_extensions(ext_els: list[ElementDefinition], sd: StructureDefinition, include_optional: bool) -> list[dict]:
