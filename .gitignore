@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+venv/
+dist/
+build/
+.pytest_cache/
+.env
+*.log
+node_modules/
+
+# Local context-tracking files (agent/session notes) — intentionally not published.
+tasks.md
+decisions/
+launch-posts.md

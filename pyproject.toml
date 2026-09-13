@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hl7fhirgen"
+version = "0.1.0"
+description = "Generate, validate, and explain FHIR resources against any StructureDefinition profile — no vendor lock-in."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+authors = [{ name = "mwaseem75" }]
+dependencies = [
+    "Faker>=20.0.0",
+    "click>=8.1.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0"]
+
+[project.scripts]
+hl7fhirgen = "hl7fhirgen.cli:cli"
+
+[tool.setuptools.packages.find]
+where = ["src"]

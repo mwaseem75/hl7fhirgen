@@ -1,0 +1,43 @@
+{
+  "resourceType": "StructureDefinition",
+  "id": "example-patient",
+  "url": "http://example.org/fhir/StructureDefinition/example-patient",
+  "name": "ExamplePatient",
+  "status": "draft",
+  "description": "Hand-authored demo profile (not an official IG) used in hl7FHIRGen's README and tests. Requires an identifier with a fixed system, a name, and a gender bound to the standard administrative-gender value set; birthDate is must-support; includes one example extension.",
+  "type": "Patient",
+  "baseDefinition": "http://hl7.org/fhir/StructureDefinition/Patient",
+  "derivation": "constraint",
+  "snapshot": {
+    "element": [
+      { "id": "Patient", "path": "Patient", "min": 0, "max": "*" },
+
+      { "id": "Patient.identifier", "path": "Patient.identifier", "short": "Medical record number",
+        "min": 1, "max": "1", "type": [{ "code": "Identifier" }], "mustSupport": true },
+      { "id": "Patient.identifier.system", "path": "Patient.identifier.system",
+        "min": 1, "max": "1", "type": [{ "code": "uri" }], "fixedUri": "http://example.org/mrn" },
+      { "id": "Patient.identifier.value", "path": "Patient.identifier.value",
+        "min": 1, "max": "1", "type": [{ "code": "string" }], "mustSupport": true },
+
+      { "id": "Patient.name", "path": "Patient.name", "short": "Patient's name",
+        "min": 1, "max": "*", "type": [{ "code": "HumanName" }], "mustSupport": true },
+      { "id": "Patient.name.family", "path": "Patient.name.family",
+        "min": 1, "max": "1", "type": [{ "code": "string" }], "mustSupport": true },
+      { "id": "Patient.name.given", "path": "Patient.name.given",
+        "min": 1, "max": "*", "type": [{ "code": "string" }], "mustSupport": true },
+
+      { "id": "Patient.gender", "path": "Patient.gender", "short": "Administrative gender",
+        "min": 1, "max": "1", "type": [{ "code": "code" }],
+        "binding": { "strength": "required", "valueSet": "http://hl7.org/fhir/ValueSet/administrative-gender" } },
+
+      { "id": "Patient.birthDate", "path": "Patient.birthDate", "short": "Date of birth",
+        "min": 0, "max": "1", "type": [{ "code": "date" }], "mustSupport": true },
+
+      { "id": "Patient.extension:birthPlace", "path": "Patient.extension", "sliceName": "birthPlace",
+        "short": "Place of birth (example extension)", "min": 0, "max": "1",
+        "type": [{ "code": "Extension", "profile": ["http://hl7.org/fhir/StructureDefinition/patient-birthPlace"] }] },
+      { "id": "Patient.extension:birthPlace.value[x]", "path": "Patient.extension.value[x]",
+        "min": 0, "max": "1", "type": [{ "code": "Address" }] }
+    ]
+  }
+}
