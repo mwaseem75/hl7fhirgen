@@ -25,6 +25,16 @@ ALWAYS_ARRAY_FIELDS = {
 
 
 def generate_resource(sd: StructureDefinition, include_optional: bool = False) -> dict:
+    """Generate a synthetic FHIR resource conforming to `sd`.
+
+    Args:
+        sd: The profile to generate against.
+        include_optional: If True, also populate elements that are neither
+            required nor must-support. Defaults to a minimal-but-valid resource.
+
+    Returns:
+        A plain dict (JSON-serializable) with `resourceType` set to `sd.type`.
+    """
     resource: dict = {"resourceType": sd.type}
     _populate_children(resource, sd, prefix="", include_optional=include_optional)
     return resource

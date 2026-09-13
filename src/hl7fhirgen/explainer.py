@@ -5,6 +5,15 @@ from hl7fhirgen.structure_definition import StructureDefinition
 
 
 def explain(sd: StructureDefinition) -> str:
+    """Render `sd` as a plain-English markdown summary.
+
+    Args:
+        sd: The profile to summarize.
+
+    Returns:
+        A markdown string with sections for required elements, must-support
+        elements, extensions, value-set bindings, and fixed/pattern values.
+    """
     lines = [f"# {sd.name} ({sd.type})"]
     if sd.url:
         lines.append(f"`{sd.url}`")

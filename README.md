@@ -143,6 +143,11 @@ pip install -e ".[dev]"
 pytest
 ```
 
+See `CONTRIBUTING.md` for the project layout, testing conventions, and how to report a
+profile that generates or validates incorrectly. `CHANGELOG.md` tracks released versions.
+Every public function and class has a docstring — `help(hl7fhirgen.generator)` (or your
+editor's hover/go-to-definition) works from a plain `pip install`.
+
 ## Roadmap
 
 - NPHIES profile pack: synthetic eligibility/claim/pre-auth resources, a

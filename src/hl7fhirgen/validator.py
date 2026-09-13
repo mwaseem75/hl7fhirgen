@@ -34,6 +34,14 @@ _PRIMITIVE_CHECKS = {
 
 @dataclass
 class ValidationIssue:
+    """One validation finding.
+
+    Attributes:
+        severity: "error" (makes the resource invalid) or "warning".
+        path: The relative element path the issue applies to, e.g. "name.family".
+        message: Human-readable description of the problem.
+    """
+
     severity: str  # "error" | "warning"
     path: str
     message: str
@@ -41,10 +49,13 @@ class ValidationIssue:
 
 @dataclass
 class ValidationResult:
+    """The outcome of `validate_resource`: a list of issues plus a `valid` summary."""
+
     issues: list[ValidationIssue] = field(default_factory=list)
 
     @property
     def valid(self) -> bool:
+        """True if there are no issues at "error" severity."""
         return not any(i.severity == "error" for i in self.issues)
 
 
@@ -73,6 +84,15 @@ def _pattern_matches(actual, pattern) -> bool:
 
 
 def validate_resource(resource: dict, sd: StructureDefinition) -> ValidationResult:
+    """Check `resource` against `sd` (see module docstring for exactly what's checked).
+
+    Args:
+        resource: The FHIR resource to validate, as a plain dict.
+        sd: The profile to validate against.
+
+    Returns:
+        A ValidationResult; `.valid` is False if any error-severity issue was found.
+    """
     result = ValidationResult()
 
     if resource.get("resourceType") != sd.type:
