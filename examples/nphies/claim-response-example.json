@@ -1,0 +1,22 @@
+{
+  "resourceType": "ClaimResponse",
+  "status": "active",
+  "outcome": "error",
+  "error": [
+    {
+      "itemSequence": 1,
+      "code": {
+        "coding": [
+          { "system": "http://example.org/illustrative/rejection-reason", "code": "duplicate-claim" }
+        ]
+      }
+    },
+    {
+      "code": {
+        "coding": [
+          { "system": "http://example.org/illustrative/rejection-reason", "code": "missing-preauth" }
+        ]
+      }
+    }
+  ]
+}

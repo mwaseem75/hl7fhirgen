@@ -1,0 +1,51 @@
+{
+  "resourceType": "StructureDefinition",
+  "id": "example-nphies-claim",
+  "url": "http://example.org/fhir/StructureDefinition/example-nphies-claim",
+  "name": "ExampleNphiesClaim",
+  "status": "draft",
+  "description": "Hand-authored, illustrative demo profile inspired by the general shape of NPHIES-style institutional claims — NOT an official NPHIES Implementation Guide profile and not sourced from any non-public material. Used to demonstrate and test the hl7fhirgen NPHIES pack's `check-claim` command. Point `check-claim` at your own copy of a real NPHIES profile (from the NPHIES developer portal) for actual submissions.",
+  "type": "Claim",
+  "baseDefinition": "http://hl7.org/fhir/StructureDefinition/Claim",
+  "derivation": "constraint",
+  "snapshot": {
+    "element": [
+      { "id": "Claim", "path": "Claim", "min": 0, "max": "*" },
+
+      { "id": "Claim.status", "path": "Claim.status", "min": 1, "max": "1",
+        "type": [{ "code": "code" }], "fixedCode": "active" },
+      { "id": "Claim.type", "path": "Claim.type", "min": 1, "max": "1",
+        "type": [{ "code": "CodeableConcept" }],
+        "patternCodeableConcept": { "coding": [{ "system": "http://example.org/illustrative/claim-type", "code": "institutional" }] } },
+      { "id": "Claim.use", "path": "Claim.use", "min": 1, "max": "1",
+        "type": [{ "code": "code" }], "fixedCode": "claim" },
+
+      { "id": "Claim.patient", "path": "Claim.patient", "short": "The patient the claim is for",
+        "min": 1, "max": "1", "type": [{ "code": "Reference", "targetProfile": ["http://hl7.org/fhir/StructureDefinition/Patient"] }], "mustSupport": true },
+      { "id": "Claim.provider", "path": "Claim.provider", "short": "Billing provider",
+        "min": 1, "max": "1", "type": [{ "code": "Reference", "targetProfile": ["http://hl7.org/fhir/StructureDefinition/Organization"] }], "mustSupport": true },
+      { "id": "Claim.insurer", "path": "Claim.insurer", "short": "Target payer",
+        "min": 0, "max": "1", "type": [{ "code": "Reference", "targetProfile": ["http://hl7.org/fhir/StructureDefinition/Organization"] }], "mustSupport": true },
+
+      { "id": "Claim.priority", "path": "Claim.priority", "min": 1, "max": "1",
+        "type": [{ "code": "CodeableConcept" }],
+        "patternCodeableConcept": { "coding": [{ "system": "http://terminology.hl7.org/CodeSystem/processpriority", "code": "normal" }] } },
+
+      { "id": "Claim.diagnosis", "path": "Claim.diagnosis", "short": "Diagnoses supporting the claim",
+        "min": 1, "max": "*", "type": [{ "code": "BackboneElement" }], "mustSupport": true },
+      { "id": "Claim.diagnosis.sequence", "path": "Claim.diagnosis.sequence",
+        "min": 1, "max": "1", "type": [{ "code": "positiveInt" }] },
+      { "id": "Claim.diagnosis.diagnosis[x]", "path": "Claim.diagnosis.diagnosis[x]",
+        "min": 1, "max": "1", "type": [{ "code": "CodeableConcept" }], "mustSupport": true },
+
+      { "id": "Claim.item", "path": "Claim.item", "short": "Billed items/services",
+        "min": 1, "max": "*", "type": [{ "code": "BackboneElement" }], "mustSupport": true },
+      { "id": "Claim.item.sequence", "path": "Claim.item.sequence",
+        "min": 1, "max": "1", "type": [{ "code": "positiveInt" }] },
+      { "id": "Claim.item.productOrService", "path": "Claim.item.productOrService",
+        "min": 1, "max": "1", "type": [{ "code": "CodeableConcept" }], "mustSupport": true },
+      { "id": "Claim.item.quantity", "path": "Claim.item.quantity",
+        "min": 0, "max": "1", "type": [{ "code": "Quantity" }] }
+    ]
+  }
+}
