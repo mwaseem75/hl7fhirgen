@@ -5,6 +5,12 @@ and paste. Every example below was actually run to produce the output shown — 
 something on your machine looks different, that's worth reporting (see
 [CONTRIBUTING.md](CONTRIBUTING.md)).
 
+Everything in this tutorial is also available as a point-and-click experience in the
+[web playground](#9-try-the-web-playground) (step 9) — the same generate/validate/explain
+flow, no terminal required:
+
+![hl7FHIRGen web playground](docs/screenshots/playground-hero.png)
+
 ## 1. Install it
 
 ```bash
@@ -166,6 +172,31 @@ git clone https://github.com/mwaseem75/hl7fhirgen.git
 cd hl7fhirgen
 ```
 
+**While you're here:** the repo also ships a couple more example profiles beyond the
+`Patient` one from step 2 — `examples/observation-example-profile.json` (a vital-sign
+Observation, showing off *choice types*: `effective[x]`/`value[x]` resolve automatically
+to `effectiveDateTime`/`valueQuantity` based on the declared type) and
+`examples/encounter-example-profile.json` (a repeating `participant` element with a
+nested required `Reference`). Same commands as before work on either:
+
+```console
+$ hl7fhirgen generate examples/observation-example-profile.json --full
+{
+  "resourceType": "Observation",
+  "status": "final",
+  "category": { "coding": [{ "system": "http://terminology.hl7.org/CodeSystem/observation-category", "code": "vital-signs" }] },
+  "code": { "coding": [{ "system": "http://example.org/CodeSystem/example", "code": "example", "display": "Word" }], "text": "Whom" },
+  "subject": { "reference": "Patient/97c79d9a-42e3-4c12-aebf-858455bdf836" },
+  "effectiveDateTime": "2001-08-09T00:10:07Z",
+  "valueQuantity": { "value": 193.3, "unit": "unit", "system": "http://unitsofmeasure.org" }
+}
+```
+
+Notice `effective[x]` and `value[x]` from the profile became `effectiveDateTime` and
+`valueQuantity` in the output — FHIR never serializes a literal `[x]`, and `hl7fhirgen`
+resolves it to whichever concrete type the profile declares, automatically, for both
+generation and validation.
+
 Check a claim response for recognized rejection patterns:
 
 ```console
@@ -223,6 +254,37 @@ This bundles the MCP server with a skill that teaches Claude when to reach for
 `hl7fhirgen` and flags real gotchas found while building it (FHIR's array-vs-scalar JSON
 shape rules, choice-type resolution, per-instance cardinality checking).
 
+### What that looks like in practice
+
+With the plugin installed, you don't call a tool by name — you just ask, in a Claude
+Code session, with your profile pasted or attached:
+
+> "Here's a StructureDefinition — generate a test resource for it and validate it."
+
+Claude picks `generate_fhir_resource` then `validate_fhir_resource` on its own. Behind
+the scenes, each tool takes the full JSON text of a profile/resource as a string
+argument (not a file path) and returns a plain result — here's `nphies_explain_rejection`,
+the simplest one, called directly and verified against the real running server:
+
+```
+tool: nphies_explain_rejection
+args: {"code": "duplicate-claim"}
+result:
+{
+  "title": "A claim for this patient/service/date appears to already be on file",
+  "likely_causes": [
+    "The claim was already submitted and is still processing",
+    "A resubmission was sent without referencing the original claim"
+  ],
+  "suggested_fix": "Check claim status before resubmitting; if correcting an earlier claim, reference it explicitly rather than submitting a fresh one.",
+  "disclaimer": "Community-sourced guidance seeded with illustrative examples, not an official NPHIES source. Verify against the current NPHIES Implementation Guide and your payer contract before acting on a real claim decision."
+}
+```
+
+See the README's [MCP server](README.md#mcp-server) section for every tool's exact
+arguments and a real result — `generate_fhir_resource`, `validate_fhir_resource`,
+`explain_profile`, and `nphies_check_claim` included.
+
 ## 8. Add it to CI with the GitHub Action
 
 Gate a pull request on every test resource still validating against your profile:
@@ -249,7 +311,11 @@ docker compose up --build
 
 Open http://localhost:8000 — generate, validate, explain, and run the NPHIES pack's
 `check-claim`, with the same bundled examples this tutorial uses pre-loadable from a
-dropdown. You can also deploy your own copy to [Render](https://dashboard.render.com)
+dropdown:
+
+![Generating and validating a claim against the NPHIES-style example profile in the web playground](docs/screenshots/playground-generate-validate.png)
+
+You can also deploy your own copy to [Render](https://dashboard.render.com)
 via **New +** → **Blueprint** (it picks up `render.yaml` automatically).
 
 ## Where to go next
