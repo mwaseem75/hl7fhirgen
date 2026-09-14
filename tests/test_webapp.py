@@ -25,6 +25,8 @@ def test_examples_endpoint_includes_bundled_profiles():
     assert response.status_code == 200
     data = response.json()
     assert "patient" in data["profiles"]
+    assert "observation" in data["profiles"]
+    assert "encounter" in data["profiles"]
     assert "nphies-claim" in data["profiles"]
     assert "nphies-claim-response" in data["resources"]
 

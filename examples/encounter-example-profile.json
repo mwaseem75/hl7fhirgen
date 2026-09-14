@@ -1,0 +1,36 @@
+{
+  "resourceType": "StructureDefinition",
+  "id": "example-encounter",
+  "url": "http://example.org/fhir/StructureDefinition/example-encounter",
+  "name": "ExampleEncounter",
+  "status": "draft",
+  "description": "Hand-authored demo profile (not an official IG) for a finished Encounter. Used in hl7fhirgen's tutorial/tests to demonstrate a repeating BackboneElement (participant) with a nested required Reference, alongside an optional-only field (reasonCode) that only appears with --full.",
+  "type": "Encounter",
+  "baseDefinition": "http://hl7.org/fhir/StructureDefinition/Encounter",
+  "derivation": "constraint",
+  "snapshot": {
+    "element": [
+      { "id": "Encounter", "path": "Encounter", "min": 0, "max": "*" },
+
+      { "id": "Encounter.status", "path": "Encounter.status", "min": 1, "max": "1",
+        "type": [{ "code": "code" }], "fixedCode": "finished" },
+
+      { "id": "Encounter.class", "path": "Encounter.class", "short": "Classification of the encounter",
+        "min": 1, "max": "1", "type": [{ "code": "Coding" }], "mustSupport": true },
+
+      { "id": "Encounter.subject", "path": "Encounter.subject", "short": "The patient present at the encounter",
+        "min": 1, "max": "1", "type": [{ "code": "Reference", "targetProfile": ["http://hl7.org/fhir/StructureDefinition/Patient"] }], "mustSupport": true },
+
+      { "id": "Encounter.period", "path": "Encounter.period", "short": "Start and end time of the encounter",
+        "min": 1, "max": "1", "type": [{ "code": "Period" }], "mustSupport": true },
+
+      { "id": "Encounter.participant", "path": "Encounter.participant", "short": "List of participants involved",
+        "min": 0, "max": "*", "type": [{ "code": "BackboneElement" }], "mustSupport": true },
+      { "id": "Encounter.participant.individual", "path": "Encounter.participant.individual",
+        "min": 1, "max": "1", "type": [{ "code": "Reference", "targetProfile": ["http://hl7.org/fhir/StructureDefinition/Practitioner"] }], "mustSupport": true },
+
+      { "id": "Encounter.reasonCode", "path": "Encounter.reasonCode", "short": "Reason the encounter takes place",
+        "min": 0, "max": "*", "type": [{ "code": "CodeableConcept" }] }
+    ]
+  }
+}

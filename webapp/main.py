@@ -22,6 +22,8 @@ EXAMPLES_DIR = Path(__file__).parent.parent / "examples"
 
 EXAMPLE_FILES = {
     "patient": EXAMPLES_DIR / "patient-example-profile.json",
+    "observation": EXAMPLES_DIR / "observation-example-profile.json",
+    "encounter": EXAMPLES_DIR / "encounter-example-profile.json",
     "nphies-claim": EXAMPLES_DIR / "nphies" / "claim-example-profile.json",
     "nphies-claim-response": EXAMPLES_DIR / "nphies" / "claim-response-example-profile.json",
 }
