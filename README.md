@@ -3,6 +3,7 @@
 [![Tests](https://github.com/mwaseem75/hl7fhirgen/actions/workflows/test.yml/badge.svg)](https://github.com/mwaseem75/hl7fhirgen/actions/workflows/test.yml)
 [![PyPI](https://img.shields.io/pypi/v/hl7fhirgen)](https://pypi.org/project/hl7fhirgen/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+<img width="1536" alt="image" src="https://github.com/user-attachments/assets/a34cb6e7-7d8d-4e2c-9f72-19f8d7e2abbb" />
 
 Generate, validate, and explain FHIR resources against any StructureDefinition
 profile — for any FHIR IG, with no vendor lock-in. Includes an NPHIES pack for
