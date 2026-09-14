@@ -171,6 +171,84 @@ For Claude Code: this repo ships a `.mcp.json`, so opening it in Claude Code
 makes the server available automatically. For other clients, point them at the
 `hl7fhirgen-mcp` command (installed by the `mcp` extra above).
 
+### Using the tools
+
+In a chat-based client (Claude Desktop, Claude Code, ...) you don't call a tool
+directly — you just ask in plain language, with the profile/resource pasted or attached,
+and the model picks the right tool:
+
+> "Here's a StructureDefinition — generate a test Patient for it and tell me what's required."
+> → calls `explain_profile` and `generate_fhir_resource`
+>
+> "Does this ClaimResponse pass validation, and why was it rejected?"
+> → calls `nphies_check_claim`
+
+For a programmatic MCP client — or just to see the exact shape each tool expects and
+returns — here's every tool's arguments and a real result (`profile_json`/
+`resource_json` values are truncated below; they're the full JSON text of a
+StructureDefinition/resource, same as the bundled `examples/` files):
+
+**`generate_fhir_resource`** — `{"profile_json": "...", "include_optional": false}` →
+```json
+{
+  "resourceType": "Patient",
+  "identifier": [{ "use": "official", "system": "http://example.org/mrn", "value": "ID-87669842" }],
+  "name": [{ "use": "official", "family": "Hughes", "given": ["Patricia"] }],
+  "gender": "unknown",
+  "birthDate": "2013-09-24"
+}
+```
+
+**`validate_fhir_resource`** — `{"resource_json": "...", "profile_json": "..."}` →
+```json
+{
+  "valid": false,
+  "issues": [
+    { "severity": "error", "path": "identifier", "message": "required (min cardinality 1) but found 0" },
+    { "severity": "error", "path": "name", "message": "required (min cardinality 1) but found 0" },
+    { "severity": "error", "path": "gender", "message": "required (min cardinality 1) but found 0" }
+  ]
+}
+```
+
+**`explain_profile`** — `{"profile_json": "..."}` → the same markdown shown in the
+[Demo](#demo) section above, as a single string.
+
+**`nphies_check_claim`** — `{"resource_json": "...", "profile_json": "..."}` →
+```json
+{
+  "valid": true,
+  "issues": [],
+  "rejection_explanations": [
+    {
+      "code": "duplicate-claim",
+      "title": "A claim for this patient/service/date appears to already be on file",
+      "likely_causes": ["The claim was already submitted and is still processing", "A resubmission was sent without referencing the original claim"],
+      "suggested_fix": "Check claim status before resubmitting; if correcting an earlier claim, reference it explicitly rather than submitting a fresh one."
+    }
+  ],
+  "disclaimer": "Community-sourced guidance seeded with illustrative examples, not an official NPHIES source. Verify against the current NPHIES Implementation Guide and your payer contract before acting on a real claim decision."
+}
+```
+
+**`nphies_explain_rejection`** — `{"code": "duplicate-claim"}` →
+```json
+{
+  "title": "A claim for this patient/service/date appears to already be on file",
+  "likely_causes": ["The claim was already submitted and is still processing", "A resubmission was sent without referencing the original claim"],
+  "suggested_fix": "Check claim status before resubmitting; if correcting an earlier claim, reference it explicitly rather than submitting a fresh one.",
+  "disclaimer": "Community-sourced guidance seeded with illustrative examples, not an official NPHIES source. Verify against the current NPHIES Implementation Guide and your payer contract before acting on a real claim decision."
+}
+```
+
+**`nphies_list_rejection_codes`** — `{}` →
+```json
+{ "codes": ["diagnosis-not-covered", "duplicate-claim", "eligibility-expired", "invalid-provider-id", "missing-preauth"] }
+```
+
+Every one of these was run against the real server, not hand-written — see
+`tests/test_mcp_server.py` for the same calls as an automated suite.
+
 ### Claude Code plugin
 
 ```
