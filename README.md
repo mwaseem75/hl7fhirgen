@@ -20,6 +20,8 @@ profile, or one you're authoring yourself.
 New here? **[TUTORIAL.md](TUTORIAL.md)** walks through every feature step by step,
 copy-paste commands included.
 
+![hl7FHIRGen web playground](docs/screenshots/playground-hero.png)
+
 ## Why
 
 Working with FHIR profiles is one of the most painful parts of implementing
@@ -119,10 +121,16 @@ hl7fhirgen nphies list-rejections
 
 ## NPHIES pack
 
-[NPHIES](https://nphies.sa) is Saudi Arabia's national FHIR-based claims and
-eligibility exchange — every hospital, payer, and vendor in the Kingdom is on
-it, rejection codes are notoriously hard to act on, and there's little open
-tooling for it. The NPHIES pack adds two things on top of the generic engine:
+[NPHIES](https://portal.nphies.sa/ig/index.html) is Saudi Arabia's national platform
+for electronic healthcare financial transactions between providers and insurers:
+coverage eligibility checks, prior authorizations, claim submission (including batch
+claims), payment reconciliation, and claim cancellation. It's built on **HL7 FHIR
+R4.0.1** via the "Healthcare Financial Services" Implementation Guide, published by HL7
+Saudi Arabia at [portal.nphies.sa](https://portal.nphies.sa/ig/index.html). Every
+hospital, clinic, and insurer operating in the Kingdom integrates with it, and the
+rejection/adjudication codes that come back on a denied or errored claim are notoriously
+hard to act on from raw JSON alone — there's little open, developer-friendly tooling
+around it. The NPHIES pack adds two things on top of the generic engine:
 
 ```bash
 hl7fhirgen nphies check-claim my-claim-response.json --profile my-nphies-profile.json
@@ -200,6 +208,8 @@ docker compose up --build
 Open http://localhost:8000 — generate, validate, explain, and run the NPHIES pack's
 `check-claim` entirely in the browser, with the same bundled examples the CLI/tests use.
 
+![Generating and validating a claim against the NPHIES-style example profile in the web playground](docs/screenshots/playground-generate-validate.png)
+
 **Deploy your own copy to Render:** connect this repo on [Render](https://dashboard.render.com)
 via **New +** → **Blueprint** — it picks up `render.yaml` and deploys `webapp/Dockerfile`
 automatically (free tier).
@@ -246,6 +256,43 @@ None of this is hidden — `hl7fhirgen validate` reports exactly what it
 checked, and unsupported constructs are meant to fail loudly rather than
 silently pass.
 
+## Architecture
+
+Every interface (CLI, MCP server, web playground, GitHub Action) is a thin wrapper
+around the same core engine — there's exactly one place that knows how to parse a
+StructureDefinition, generate against it, or validate against it.
+
+```mermaid
+flowchart TD
+    subgraph Interfaces
+        CLI[CLI]
+        MCP[MCP server]
+        WEB[Web playground]
+        GHA[GitHub Action]
+    end
+
+    subgraph Core["Core engine — src/hl7fhirgen/"]
+        SD[structure_definition.py]
+        GEN[generator.py]
+        VAL[validator.py]
+        EXP[explainer.py]
+    end
+
+    NPHIES["packs/nphies/<br/>check_claim + rejection_codes"]
+
+    CLI --> SD
+    MCP --> SD
+    WEB --> SD
+    GHA -.-> CLI
+
+    SD --> GEN
+    SD --> VAL
+    SD --> EXP
+
+    GEN --> NPHIES
+    VAL --> NPHIES
+```
+
 ## Project layout
 
 ```
@@ -257,17 +304,40 @@ action/                 GitHub Action wrapping the CLI
 tests/                  pytest suite
 ```
 
-## Development
+## Working with this repo
+
+Clone it and set up a dev install with every optional feature (MCP server + web
+playground) enabled:
 
 ```bash
+git clone https://github.com/mwaseem75/hl7fhirgen.git
+cd hl7fhirgen
 pip install -e ".[dev,mcp,webapp]"
 pytest
 ```
 
-See `CONTRIBUTING.md` for the project layout, testing conventions, and how to report a
-profile that generates or validates incorrectly. `CHANGELOG.md` tracks released versions.
-Every public function and class has a docstring — `help(hl7fhirgen.generator)` (or your
-editor's hover/go-to-definition) works from a plain `pip install`.
+From there:
+
+```bash
+# Try the CLI against a bundled example — no network, no external profile needed
+hl7fhirgen generate examples/patient-example-profile.json --full
+hl7fhirgen explain examples/nphies/claim-example-profile.json
+
+# Run the web playground locally without Docker
+uvicorn webapp.main:app --reload
+# then open http://localhost:8000
+
+# ...or with Docker, matching how it deploys
+docker compose up --build
+```
+
+Every module has a matching test file in `tests/` (`structure_definition.py` ↔
+`test_structure_definition.py`, and so on) — `pytest -k <name>` runs just one. See
+`CONTRIBUTING.md` for the full project layout, testing conventions, and how to report a
+profile that generates or validates incorrectly, and `TUTORIAL.md` for a guided walk
+through every feature. `CHANGELOG.md` tracks released versions. Every public function
+and class has a docstring — `help(hl7fhirgen.generator)` (or your editor's
+hover/go-to-definition) works from a plain `pip install`.
 
 ## Roadmap
 

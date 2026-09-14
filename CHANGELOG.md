@@ -3,6 +3,22 @@
 All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+- `examples/observation-example-profile.json` and `examples/encounter-example-profile.json`
+  — broadens the bundled examples beyond Patient/Claim/ClaimResponse; wired into the web
+  playground's "Load example" dropdown and covered by round-trip tests.
+- `TUTORIAL.md` — a step-by-step community walkthrough; every command's shown output was
+  actually run and verified.
+- README: an "Architecture" section with a Mermaid diagram, a "Working with this repo"
+  section (clone → dev install → try the CLI/webapp), real screenshots of the web
+  playground, and an expanded NPHIES description sourced from the published IG.
+
+### Changed
+- The NPHIES link across README/TUTORIAL now points to the actual Implementation Guide
+  (`https://portal.nphies.sa/ig/index.html`) instead of the bare `nphies.sa` domain.
+
 ## [0.1.0] - 2026-09-14
 
 First release, published to [PyPI](https://pypi.org/project/hl7fhirgen/0.1.0/).

@@ -155,9 +155,11 @@ tell you plainly what it checked than pretend to check everything).
 
 ## 6. The NPHIES pack: pre-submission claim checking
 
-[NPHIES](https://nphies.sa) is Saudi Arabia's national FHIR-based claims and eligibility
-exchange. The NPHIES pack adds claim-specific tooling on top of everything above. Clone
-the repo to get the bundled example claim/claim-response files:
+[NPHIES](https://portal.nphies.sa/ig/index.html) is Saudi Arabia's national platform for
+electronic healthcare financial transactions (eligibility, prior authorization, claim
+submission and reimbursement, payment reconciliation) between providers and insurers,
+built on HL7 FHIR R4.0.1. The NPHIES pack adds claim-specific tooling on top of
+everything above. Clone the repo to get the bundled example claim/claim-response files:
 
 ```bash
 git clone https://github.com/mwaseem75/hl7fhirgen.git
